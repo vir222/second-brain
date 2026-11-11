@@ -11,9 +11,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    notebooks : Mapped[list["NoteBook"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
+    notebooks : Mapped[list["Notebook"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
 
-class NoteBook(Base):
+class Notebook(Base):
     __tablename__ = "notebooks"
 
     id: Mapped[int] = mapped_column(primary_key=True)
