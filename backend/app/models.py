@@ -23,4 +23,19 @@ class Notebook(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     owner: Mapped["User"] = relationship(back_populates="notebooks")
-    is_archived: Mapped[bool] = mapped_column(Boolean, server_default="false")   
+    is_archived: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    documents: Mapped[list["Document"]] = relationship(back_populates="notebook", cascade="all, delete-orphan")   
+
+class Document(Base):
+    __tablename__ = "documents"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    notebook_id: Mapped[int] = mapped_column(ForeignKey("notebooks.id", ondelete="CASCADE"), index = True)
+    filename : Mapped[str] = mapped_column(String(255))
+    storage_key : Mapped[str] = mapped_column(String(255), unique=True)
+    content_type : Mapped[str] = mapped_column(String(100))
+    size_bytes : Mapped[int]
+    status : Mapped[str] = mapped_column(String(20), server_default="pending")
+    error_message: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    notebook: Mapped["Notebook"] = relationship(back_populates="documents")

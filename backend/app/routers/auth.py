@@ -9,7 +9,7 @@ from app.security import verify_password, create_access_token, hash_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/signup", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def signup(data: UserCreate, db: Session = Depends(get_db)):
     email = data.email.lower()
     existing = db.scalar(select(User).where(User.email == email))
