@@ -55,3 +55,12 @@ class DocumentOut(BaseModel):
     status : str
     error_message: str | None
     created_at : datetime
+
+class ChunkOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id : int
+    chunk_index : int
+    page_number : int | None
+    content : str
+    

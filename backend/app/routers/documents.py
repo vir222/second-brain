@@ -6,8 +6,9 @@ from app import storage
 from app.config import settings
 from app.db import get_db
 from app.deps import get_owned_notebooks, get_current_user
-from app.models import Document, User
-from app.schemas import DocumentOut
+from app.models import Document, User, Chunk
+from app.schemas import DocumentOut, ChunkOut
+from app.processing import process_document
 
 router = APIRouter(prefix="/notebooks/{noteboook_id}/documents", tags = ["documents"])
 
@@ -16,6 +17,13 @@ ALLOWED_TYPES = {
     ".txt" : "text/plain",
     ".md" : "text/markdown",
 }
+
+def get_owned_document(notebook_id : int, document_id: int, user : User, db: Session) -> Document:
+    notebook = get_owned_notebooks(notebook_id, user, db)
+    document = db.scalar(select(Document).where(Document.id == document_id, Document.notebook_id  == notebook.id))
+    if document is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+    return document
 
 def validate_contents(extension: str, data : bytes) -> None:
     if extension == ".pdf":
@@ -57,6 +65,8 @@ def upload_document(notebook_id : int, file : UploadFile, current_user : User = 
         storage.delete_file(key)
         raise
     db.refresh(document)
+    process_document(db, document)
+    db.refresh(document)
     return document
 
 @router.get("", response_model=list[DocumentOut])
@@ -68,11 +78,15 @@ def list_documents(notebook_id : int, current_user : User = Depends(get_current_
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(notebook_id : int, document_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     notebook = get_owned_notebooks(notebook_id, current_user, db)
-    document = db.scalar(select(Document).where(Document.id == document_id, Document.notebook_id == notebook.id,))
-    if document is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "document not found")
+    document = get_owned_document(notebook_id, document_id, current_user, db)
     key = document.storage_key
     db.delete(document)
     db.commit()
     storage.delete_file(key)
+
+@router.get("/{document_id}/chunks", response_model=list[ChunkOut])
+def list_chunks(notebook_id : int, document_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db),):
+    document = get_owned_document(notebook_id, document_id, current_user, db)
+    query = (select(Chunk).where(Chunk.document_id == document.id).order_by(Chunk.chunk_index))
+    return db.scalars(query).all()
 

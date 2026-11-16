@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Text, ForeignKey, DateTime, Boolean, func
+from sqlalchemy import String, Text, ForeignKey, DateTime, Boolean, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -39,3 +39,15 @@ class Document(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     notebook: Mapped["Notebook"] = relationship(back_populates="documents")
+    chunks : Mapped[list["Chunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
+
+class Chunk(Base):
+    __tablename__ = "chunks"
+    __table_args__ = (UniqueConstraint("document_id", "chunk_index"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), index=True)
+    chunk_index : Mapped[int]
+    page_number: Mapped[int | None]
+    content : Mapped[str] = mapped_column(Text)
+    document : Mapped["Document"] = relationship(back_populates="chunks")
