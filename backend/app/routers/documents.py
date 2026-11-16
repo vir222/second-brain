@@ -9,14 +9,22 @@ from app.deps import get_owned_notebooks, get_current_user
 from app.models import Document, User, Chunk
 from app.schemas import DocumentOut, ChunkOut
 from app.processing import process_document
+from app.tasks import process_document_task
 
-router = APIRouter(prefix="/notebooks/{noteboook_id}/documents", tags = ["documents"])
+router = APIRouter(prefix="/notebooks/{notebook_id}/documents", tags = ["documents"])
 
 ALLOWED_TYPES = {
     ".pdf" : "application/pdf",
     ".txt" : "text/plain",
     ".md" : "text/markdown",
 }
+def enqueue_proccesing(document : Document, db : Session) -> None:
+    try:
+        process_document_task.delay(document.id)
+    except Exception:
+        document.status = "failed"
+        document.error_message = "Processing could not be started. Please try again"
+        db.commit()
 
 def get_owned_document(notebook_id : int, document_id: int, user : User, db: Session) -> Document:
     notebook = get_owned_notebooks(notebook_id, user, db)
@@ -65,12 +73,12 @@ def upload_document(notebook_id : int, file : UploadFile, current_user : User = 
         storage.delete_file(key)
         raise
     db.refresh(document)
-    process_document(db, document)
+    enqueue_proccesing(document, db)
     db.refresh(document)
     return document
 
 @router.get("", response_model=list[DocumentOut])
-def list_documents(notebook_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+def list_documents(notebook_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db),):
     notebook = get_owned_notebooks(notebook_id, current_user, db)
     query = (select(Document).where(Document.notebook_id == notebook.id).order_by(Document.created_at.desc()))
     return db.scalars(query).all()
@@ -90,3 +98,18 @@ def list_chunks(notebook_id : int, document_id : int, current_user : User = Depe
     query = (select(Chunk).where(Chunk.document_id == document.id).order_by(Chunk.chunk_index))
     return db.scalars(query).all()
 
+@router.get("/{document_id}", response_model=DocumentOut)
+def get_document(notebook_id : int, document_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db),):
+    return get_owned_document(notebook_id, document_id, current_user, db)
+
+@router.post("/{document_id}/reprocess", response_model=DocumentOut)
+def reprocess_document(notebook_id : int, document_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db),):
+    document = get_owned_document(notebook_id, document_id, current_user, db)
+    if document.status in ("pending", "processing"):
+        raise HTTPException(status.HTTP_409_CONFLICT, "document is already processing")
+    document.status = "pending"
+    document.error_message = None
+    db.commit()
+    enqueue_proccesing(document, db)
+    db.refresh(document)
+    return document

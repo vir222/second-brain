@@ -23,3 +23,16 @@ export type NotebookChanges = {
     description?: string | null;
     is_archived?: boolean;
 }
+
+export type DocumentStatus = "pending" | "processing" | "ready" | "failed"; 
+
+export type NotebookDocument = {
+    id: number;
+    notebook_id : number;
+    filename: string;
+    content_type : string;
+    size_bytes : number;
+    status : DocumentStatus;
+    error_message : string | null;
+    created_at : string;
+};

@@ -2,6 +2,7 @@
 
 import { useState, type SyntheticEvent } from "react";
 import type { Notebook, NotebookChanges} from "@/lib/types";
+import Link from "next/link";
 
 type NoteBookItemProps = {
     notebook : Notebook;
@@ -48,7 +49,9 @@ export default function NotebookItem({ notebook, onUpdate, onDelete}: NoteBookIt
             ) : (
                 <>
                     <h3 className="truncate font-medium">
-                        {notebook.title}
+                        <Link href={`/notebooks/${notebook.id}`} className="hover:underline">
+                            {notebook.title}
+                        </Link>
                         {notebook.is_archived && (
                             <span className="ml-2 text-xs text-gray-500">(archived)</span>
                         )}

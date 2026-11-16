@@ -9,4 +9,5 @@ class Settings(BaseSettings):
     cors_origins : list[str] = ["http://localhost:3000"]
     upload_dir : str = "uploads"
     max_upload_mb: int = 20  
+    redis_url : str = "redis://localhost:6379/0"
 settings = Settings()
