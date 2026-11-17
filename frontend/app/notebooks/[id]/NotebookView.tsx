@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import type { DocumentStatus, Notebook, NotebookDocument} from "@/lib/types";
+import SearchPanel from "@/components/SearchPanel";
 
 const MAX_UPLOAD_MB = 20;
 const POLL_INTERVAL_MS = 2000;
@@ -71,6 +72,7 @@ export default function NotebookView() {
     const hasActiveDocuments = documents.some(
         (doc) => doc.status === "pending" || doc.status === "processing"
     );
+    const hasReadyDocuments = documents.some((doc) => doc.status === "ready");
 
     useEffect(() => {
         if (!hasActiveDocuments) return;
@@ -169,6 +171,7 @@ export default function NotebookView() {
 
       <h1 className="mt-4 text-2xl font-semibold">{notebook.title}</h1>
       {notebook.description && <p className="mt-1 text-gray-600">{notebook.description}</p>}
+      <SearchPanel notebookId={notebookId} disabled = {!hasReadyDocuments}/>
 
       <div className="mt-8 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Documents ({documents.length})</h2>

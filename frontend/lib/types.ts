@@ -36,3 +36,12 @@ export type NotebookDocument = {
     error_message : string | null;
     created_at : string;
 };
+
+export type SearchResult = {
+    chunk_id : number;
+    document_id: number;
+    filename : string;
+    page_number : number | null;
+    content: string;
+    score: number;
+};
