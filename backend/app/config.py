@@ -10,4 +10,6 @@ class Settings(BaseSettings):
     upload_dir : str = "uploads"
     max_upload_mb: int = 20  
     redis_url : str = "redis://localhost:6379/0"
+    openai_api_key : str
+    embedding_model : str = "text-embedding-3-small"
 settings = Settings()

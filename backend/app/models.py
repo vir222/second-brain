@@ -1,8 +1,10 @@
 from datetime import datetime
-from sqlalchemy import String, Text, ForeignKey, DateTime, Boolean, func, UniqueConstraint
+from sqlalchemy import String, Text, ForeignKey, DateTime, Boolean, func, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
+from pgvector.sqlalchemy import Vector
 
+EMBEDDING_DIMENSIONS = 1536
 
 class User(Base):
     __tablename__ = "users"
@@ -43,7 +45,9 @@ class Document(Base):
 
 class Chunk(Base):
     __tablename__ = "chunks"
-    __table_args__ = (UniqueConstraint("document_id", "chunk_index"),)
+    __table_args__ = (UniqueConstraint("document_id", "chunk_index"), Index(
+        "ix_chunks_embedding_hnsw", "embedding", postgresql_using="hnsw", postgresql_ops={"embedding":"vector_cosine_ops"},
+    ),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), index=True)
@@ -51,3 +55,4 @@ class Chunk(Base):
     page_number: Mapped[int | None]
     content : Mapped[str] = mapped_column(Text)
     document : Mapped["Document"] = relationship(back_populates="chunks")
+    embedding : Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIMENSIONS))

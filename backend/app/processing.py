@@ -5,6 +5,7 @@ from sqlalchemy import delete
 from sqlalchemy.orm import Session
 from app import storage
 from app.models import Chunk, Document
+from app.embeddings import embed_texts
 
 logger = logging.getLogger(__name__)
 
@@ -61,19 +62,24 @@ def process_document(db: Session, document: Document) -> None:
     try:
         db.execute(delete(Chunk).where(Chunk.document_id == document.id))
         pages = extract_pages(storage.get_path(document.storage_key), document.content_type)
-        chunk_index = 0
+        #chunk_index = 0
+        chunks : list[Chunk] = []
         for page_number, page_text in pages:
             for content in chunk_text(page_text):
-                db.add(Chunk(
+                chunks.append(Chunk(
                     document_id=document.id,
-                    chunk_index=chunk_index,
+                    chunk_index=len(chunks),
                     page_number=page_number,
                     content=content,
                 ))
-                chunk_index+=1
 
-        if chunk_index == 0:
+
+        if not chunks:
             raise ProcessingError("no text could be found, (if pdf its an image not text)")
+        vectors = embed_texts([chunk.content for chunk in chunks])
+        for chunk, vector in zip(chunks, vectors, strict=True):
+            chunk.embedding = vector
+        db.add_all(chunks)
         document.status = "ready"
         db.commit()
     except Exception as e:
