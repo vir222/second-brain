@@ -12,4 +12,8 @@ class Settings(BaseSettings):
     redis_url : str = "redis://localhost:6379/0"
     openai_api_key : str
     embedding_model : str = "text-embedding-3-small"
+    anthropic_api_key : str
+    chat_model : str = "claude-haiku-5-5"
+    rag_top_k : int = 6
+    min_relevance_score : float = 0.3
 settings = Settings()

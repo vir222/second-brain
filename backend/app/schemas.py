@@ -77,4 +77,16 @@ class SearchResult(BaseModel):
     page_number : int | None
     content : str
     score : float
+
+class AskRequests(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    question: str = Field(min_length=1, max_length = 2000)
+
+class Source(SearchResult):
+    number : int
+    cited : bool
+
+class AskResponse(BaseModel):
+    answer : str
+    sources : list[Source]
     
