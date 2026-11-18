@@ -31,7 +31,7 @@ def format_sources(results: list[SearchResult]) -> str:
 
 def find_citations(answer : str) -> set[int]:
     return {int(n) for n in re.findall(r"\[(\d+)\]", answer)}
-
+"""
 def answer_question(db: Session, notebook_id: int, question : str) -> AskResponse:
     results = search_chunks(db, notebook_id, question, settings.rag_top_k)
     relevant = [r for r in results if r.score >= settings.min_relevance_score]
@@ -49,4 +49,32 @@ def answer_question(db: Session, notebook_id: int, question : str) -> AskRespons
         Source(**result.model_dump(), number=number, cited=number in cited)
         for number, result in enumerate(relevant, start=1)
     ]
+    return AskResponse(answer=answer, sources=sources)
+"""
+def build_context(db: Session, notebook_id: int, question : str) -> tuple[list[Source], str | None]:
+    results = search_chunks(db, notebook_id, question, settings.rag_top_k)
+    relevant = [r for r in results if r.score >= settings.min_relevance_score]
+
+    if not relevant:
+        return [], None
+
+    sources = [
+        Source(**result.model_dump(), number=number, cited=False)
+        for number, result in enumerate(relevant, start=1)
+    ]
+    user_message = (
+        f"<sources>\n{format_sources(sources)}\n</sources>\n\n"
+        f"Question: {question}"
+    )
+    return sources, user_message
+
+def answer_question(db: Session, notebook_id : int, question : str) -> AskResponse:
+    sources, user_message = build_context(db, notebook_id, question)
+    if user_message is None:
+        return AskResponse(answer=NO_MATCH_ANSWER, sources=[])
+
+    answer = generate(SYSTEM_PROMPT, user_message)
+    cited = find_citations(answer)
+    for source in sources:
+        source.cited = source.number in cited
     return AskResponse(answer=answer, sources=sources)

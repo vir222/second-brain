@@ -45,3 +45,14 @@ export type SearchResult = {
     content: string;
     score: number;
 };
+
+export type Source = SearchResult & {
+    number : number;
+    cited: boolean;
+};
+
+export type StreamEvent =
+| {event: "sources"; data : {sources : Source[]}}
+| {event : "delta"; data : {text : string}}
+| { event : "done"; data : {cited: number[]}}
+| { event : "error"; data : {message : string}}

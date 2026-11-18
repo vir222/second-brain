@@ -7,6 +7,7 @@ import { apiFetch, ApiError } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import type { DocumentStatus, Notebook, NotebookDocument} from "@/lib/types";
 import SearchPanel from "@/components/SearchPanel";
+import AskPanel from "@/components/AskPanel";
 
 const MAX_UPLOAD_MB = 20;
 const POLL_INTERVAL_MS = 2000;
@@ -171,6 +172,7 @@ export default function NotebookView() {
 
       <h1 className="mt-4 text-2xl font-semibold">{notebook.title}</h1>
       {notebook.description && <p className="mt-1 text-gray-600">{notebook.description}</p>}
+      <AskPanel notebookId={notebookId} disabled={!hasReadyDocuments} />
       <SearchPanel notebookId={notebookId} disabled = {!hasReadyDocuments}/>
 
       <div className="mt-8 flex items-center justify-between">
