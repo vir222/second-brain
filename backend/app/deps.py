@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
-from app.models import User, Notebook
+from app.models import User, Notebook, Conversation
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -31,3 +31,10 @@ def get_owned_notebooks(notebook_id: int, user: User, db: Session) -> Notebook:
     if notebook is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notebook not found")
     return notebook
+
+def get_owned_conversation(notebook_id: int, conversation_id : int, user: User, db : Session) -> Conversation:
+    notebook = get_owned_notebooks(notebook_id, user, db)
+    conversation = db.scalar(select(Conversation).where(Conversation.id == conversation_id, Conversation.notebook_id == notebook.id,))
+    if conversation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "Conversation could not be found")
+    return conversation

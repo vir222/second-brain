@@ -1,4 +1,5 @@
 "use client"
+//initially used for ask/prompting api
 
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";

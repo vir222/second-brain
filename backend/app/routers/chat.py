@@ -30,7 +30,7 @@ def ask(notebook_id : int, data : AskRequests, current_user: User = Depends(get_
 def ask_stream(notebook_id : int, data: AskRequests, current_user: User = Depends(get_current_user), db : Session = Depends(get_db),):
     notebook = get_owned_notebooks(notebook_id, current_user, db)
     try:
-        sources, user_message = build_context(db, notebook.id, data.question)
+        sources, user_message = build_context(db, notebook.id, data.question, data.question)
     except Exception:
         logger.exception("Failed to prepare answer")
         raise HTTPException(

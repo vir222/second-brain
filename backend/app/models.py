@@ -3,6 +3,7 @@ from sqlalchemy import String, Text, ForeignKey, DateTime, Boolean, func, Unique
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects.postgresql import JSONB
 
 EMBEDDING_DIMENSIONS = 1536
 
@@ -26,7 +27,8 @@ class Notebook(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     owner: Mapped["User"] = relationship(back_populates="notebooks")
     is_archived: Mapped[bool] = mapped_column(Boolean, server_default="false")
-    documents: Mapped[list["Document"]] = relationship(back_populates="notebook", cascade="all, delete-orphan")   
+    documents: Mapped[list["Document"]] = relationship(back_populates="notebook", cascade="all, delete-orphan")
+    conversations: Mapped[list["Conversation"]] = relationship(back_populates="notebook", cascade="all, delete-orphan")   
 
 class Document(Base):
     __tablename__ = "documents"
@@ -56,3 +58,24 @@ class Chunk(Base):
     content : Mapped[str] = mapped_column(Text)
     document : Mapped["Document"] = relationship(back_populates="chunks")
     embedding : Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIMENSIONS))
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id : Mapped[int] = mapped_column(primary_key=True)
+    notebook_id: Mapped[int] = mapped_column(ForeignKey("notebooks.id", ondelete="CASCADE"), index=True)
+    title : Mapped[str] = mapped_column(String(200), server_default="New Conversation")
+    created_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    notebook : Mapped["Notebook"] = relationship(back_populates="conversations")
+    messages : Mapped[list["Message"]] = relationship(back_populates="conversation", cascade="all, delete-orphan", order_by="Message.id",)
+
+class Message(Base):
+    __tablename__ = "messages"
+    id : Mapped[int] = mapped_column(primary_key=True)
+    conversation_id : Mapped[int] = mapped_column(ForeignKey("conversations.id", ondelete="CASCADE"), index=True)
+    role : Mapped[str] = mapped_column(String(20))
+    content : Mapped[str] = mapped_column(Text)
+    sources : Mapped[list[dict] | None] = mapped_column(JSONB)
+    created_at : Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    conversation : Mapped["Conversation"] = relationship(back_populates="messages")

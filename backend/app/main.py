@@ -3,8 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db import engine
 from sqlalchemy import text
-from app.routers import auth, users, notebooks, documents, search, chat
+from app.routers import auth, users, notebooks, documents, search, chat, conversations
+import logging 
 
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="Second Brain API")
 app.add_middleware(
@@ -19,6 +21,7 @@ app.include_router(notebooks.router)
 app.include_router(documents.router)
 app.include_router(search.router)
 app.include_router(chat.router)
+app.include_router(conversations.router)
 
 @app.get("/health")
 def health():

@@ -54,5 +54,25 @@ export type Source = SearchResult & {
 export type StreamEvent =
 | {event: "sources"; data : {sources : Source[]}}
 | {event : "delta"; data : {text : string}}
-| { event : "done"; data : {cited: number[]}}
+| { event : "done"; data : {cited: number[]; message_id?: number}}
 | { event : "error"; data : {message : string}}
+
+export type Conversation {
+    id: number;
+    title: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type ChatMessage = {
+    id: number;
+    role : "user" | "assistant";
+    content: string;
+    sources: Source[] | null;
+    created_at: string;
+    status?: "streaming" | "stopped" | "error";
+};
+
+export type ConversationDetail = Conversation & {
+    messages: ChatMessage[];
+};

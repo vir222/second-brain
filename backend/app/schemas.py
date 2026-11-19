@@ -89,4 +89,30 @@ class Source(SearchResult):
 class AskResponse(BaseModel):
     answer : str
     sources : list[Source]
+
+class ConversationCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    title : str | None = Field(default=None, max_length = 200)
+
+class ConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id : int
+    title : str
+    created_at : datetime
+    updated_at : datetime
+
+class MessageCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    content : str = Field(min_length=1, max_length=2000)
+
+class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id : int
+    role : str
+    content : str
+    sources : list[Source] | None
+    created_at : datetime
+
+class ConversationDetail(ConversationOut):
+    messages : list[MessageOut]
     

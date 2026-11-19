@@ -7,7 +7,8 @@ import { apiFetch, ApiError } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import type { DocumentStatus, Notebook, NotebookDocument} from "@/lib/types";
 import SearchPanel from "@/components/SearchPanel";
-import AskPanel from "@/components/AskPanel";
+//import AskPanel from "@/components/AskPanel";
+import ChatPanel from "@/components/chat/ChatPanel";
 
 const MAX_UPLOAD_MB = 20;
 const POLL_INTERVAL_MS = 2000;
@@ -165,14 +166,14 @@ export default function NotebookView() {
     if (!notebook) return <p className="p-8">Loading...</p>
 
     return (
-    <main className="mx-auto mt-12 max-w-2xl px-4 pb-12">
+    <main className="mx-auto mt-12 max-w-4xl px-4 pb-12">
       <Link href="/dashboard" className="text-sm underline">
         ← Back to notebooks
       </Link>
 
       <h1 className="mt-4 text-2xl font-semibold">{notebook.title}</h1>
       {notebook.description && <p className="mt-1 text-gray-600">{notebook.description}</p>}
-      <AskPanel notebookId={notebookId} disabled={!hasReadyDocuments} />
+      <ChatPanel notebookId={notebookId} disabled={!hasReadyDocuments} />
       <SearchPanel notebookId={notebookId} disabled = {!hasReadyDocuments}/>
 
       <div className="mt-8 flex items-center justify-between">
