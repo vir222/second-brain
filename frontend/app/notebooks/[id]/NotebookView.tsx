@@ -5,10 +5,12 @@ import { useParams, useRouter} from "next/navigation";
 import { useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
-import type { DocumentStatus, Notebook, NotebookDocument} from "@/lib/types";
+import type { DocumentStatus, Notebook, NotebookDocument, Flashcard} from "@/lib/types";
 import SearchPanel from "@/components/SearchPanel";
 //import AskPanel from "@/components/AskPanel";
 import ChatPanel from "@/components/chat/ChatPanel";
+import FlashcardsPanel from "@/components/FlashcardsPanel";
+
 
 const MAX_UPLOAD_MB = 20;
 const POLL_INTERVAL_MS = 2000;
@@ -44,6 +46,9 @@ export default function NotebookView() {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [flashcardsVersion, setFlashcardsVersion] = useState(0);
+    const [generatingId, setGeneratingId] = useState<number | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
 
     useEffect(() => {
         if (!getToken()) {
@@ -152,6 +157,24 @@ export default function NotebookView() {
         }
     }
 
+    async function handleGenerateFlashcards(doc: NotebookDocument) {
+        setActionError(null);
+        setNotice(null);
+        setGeneratingId(doc.id);
+        try {
+            const cards = await apiFetch<Flashcard[]>(
+                `/notebooks/${notebookId}/documents/${doc.id}/flashcards/generate`,
+                {method: "POST", body: JSON.stringify({count:10})}
+            );
+            setNotice(`Added ${cards.length} flashcards from ${doc.filename}.`);
+            setFlashcardsVersion((v) => v+1);
+        } catch (err) {
+            handleActionError(err);
+        } finally {
+            setGeneratingId(null);
+        }
+    }
+
     if (loadError) {
         return (
             <main className="mx-auto mt-12 max-w-2x1 px-4">
@@ -174,6 +197,7 @@ export default function NotebookView() {
       <h1 className="mt-4 text-2xl font-semibold">{notebook.title}</h1>
       {notebook.description && <p className="mt-1 text-gray-600">{notebook.description}</p>}
       <ChatPanel notebookId={notebookId} disabled={!hasReadyDocuments} />
+      <FlashcardsPanel notebookId={notebookId} refreshKey={flashcardsVersion} />
       <SearchPanel notebookId={notebookId} disabled = {!hasReadyDocuments}/>
 
       <div className="mt-8 flex items-center justify-between">
@@ -197,7 +221,7 @@ export default function NotebookView() {
       <p className="mt-1 text-xs text-gray-500">PDF, TXT, or Markdown, up to {MAX_UPLOAD_MB} MB</p>
 
       {actionError && <p className="mt-4 text-sm text-red-600">{actionError}</p>}
-
+      {notice && <p className="mt-4 text-sm text-green-700">{notice}</p>}
       {documents.length === 0 ? (
         <p className="mt-4 text-sm text-gray-500">No documents yet. Upload one to get started.</p>
       ) : (
@@ -214,6 +238,15 @@ export default function NotebookView() {
                   {doc.status === "failed" && (
                     <button onClick={() => handleReprocess(doc.id)} className="underline">
                       Retry
+                    </button>
+                  )}
+                  {doc.status === "ready" && (
+                    <button
+                        onClick={() => handleGenerateFlashcards(doc)}
+                        disabled={generatingId !== null}
+                        className="underline disabled:opacity-50"
+                    >
+                        {generatingId === doc.id ? "Making Cards..." : "Make flashcards"}
                     </button>
                   )}
                   <button onClick={() => handleDelete(doc.id)} className="text-red-600 underline">

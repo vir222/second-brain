@@ -4,3 +4,5 @@ __pycache__/
 node_modules/
 .next/
 backend/uploads/
+.pytest_cache/
+backend/test_uploads/

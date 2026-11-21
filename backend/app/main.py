@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db import engine
 from sqlalchemy import text
-from app.routers import auth, users, notebooks, documents, search, chat, conversations
+from app.routers import auth, users, notebooks, documents, search, chat, conversations, flashcards
 import logging 
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +22,7 @@ app.include_router(documents.router)
 app.include_router(search.router)
 app.include_router(chat.router)
 app.include_router(conversations.router)
+app.include_router(flashcards.router)
 
 @app.get("/health")
 def health():

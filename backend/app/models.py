@@ -44,6 +44,7 @@ class Document(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     notebook: Mapped["Notebook"] = relationship(back_populates="documents")
     chunks : Mapped[list["Chunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
+    flashcards: Mapped[list["Flashcard"]] = relationship(back_populates="document", cascade="all, delete-orphan")
 
 class Chunk(Base):
     __tablename__ = "chunks"
@@ -79,3 +80,21 @@ class Message(Base):
     sources : Mapped[list[dict] | None] = mapped_column(JSONB)
     created_at : Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     conversation : Mapped["Conversation"] = relationship(back_populates="messages")
+
+class Flashcard(Base):
+    __tablename__ = "flashcards"
+
+    id : Mapped[int] = mapped_column(primary_key=True)
+    document_id : Mapped[int] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), index = True)
+    front: Mapped[str] = mapped_column(Text)
+    back: Mapped[str] = mapped_column(Text)
+    page_number: Mapped[int | None]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    document: Mapped["Document"] = relationship(back_populates="flashcards")
+    ease_factor: Mapped[float] = mapped_column(server_default="2.5")
+    interval_days: Mapped[int] = mapped_column(server_default="0")
+    repetitions: Mapped[int] = mapped_column(server_default="0")
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+

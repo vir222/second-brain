@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from app.srs import Rating
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -115,4 +116,52 @@ class MessageOut(BaseModel):
 
 class ConversationDetail(ConversationOut):
     messages : list[MessageOut]
+
+class GeneratedCard(BaseModel):
+    front: str
+    back: str
+    source_number: int
+
+class GeneratedDeck(BaseModel):
+    cards: list[GeneratedCard]
+
+class FlashcardGenerateRequest(BaseModel):
+    count: int = Field(default=10, ge=1, le=20)
+
+class FlashcardOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    document_id: int
+    front: str
+    back: str
+    page_number: int | None
+    repetitions : int
+    interval_days : int
+    due_at : datetime
+    last_reviewed_at : datetime | None
+    created_at: datetime
+
+
+class FlashcardUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    front: str | None = Field(default=None, min_length=1, max_length=1000)
+    back: str | None = Field(default=None, min_length=1, max_length=2000)
+    @field_validator("front", "back")
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
+
+class ReviewRequest(BaseModel):
+    rating: Rating
+
+class FlashcardStats(BaseModel):
+    total : int
+    due : int
+    new : int
+
+    
     

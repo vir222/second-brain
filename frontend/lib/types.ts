@@ -57,7 +57,7 @@ export type StreamEvent =
 | { event : "done"; data : {cited: number[]; message_id?: number}}
 | { event : "error"; data : {message : string}}
 
-export type Conversation {
+export type Conversation = {
     id: number;
     title: string;
     created_at: string;
@@ -76,3 +76,24 @@ export type ChatMessage = {
 export type ConversationDetail = Conversation & {
     messages: ChatMessage[];
 };
+
+export type Flashcard = {
+    id: number;
+    document_id : number;
+    front : string;
+    back : string;
+    page_number: number | null;
+    repetitions: number;
+    interval_days: number;
+    due_at: string;
+    last_reviewed_at: string | null;
+    created_at : string;
+};
+
+export type FlashcardStats = {
+    total: number;
+    due: number;
+    new: number;
+};
+
+export type Rating = "again" | "hard" | "good" | "easy";

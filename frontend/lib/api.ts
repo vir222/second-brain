@@ -30,7 +30,7 @@ async function toApiError(res: Response): Promise<ApiError> {
         if (typeof data.detail === "string") {
             message = data.detail;
         } else if (Array.isArray(data.detail)) {
-            message = data.detail.map((e: {msg : string }) => e.msg.join(", "));
+            message = data.detail.map((e: { msg: string }) => e.msg).join(", ");
         }
     } catch {
         //keep default message no json body

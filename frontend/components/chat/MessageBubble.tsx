@@ -53,10 +53,10 @@ export default function MessageBubble( { message }: {message: ChatMessage}) {
             </div>
 
             {message.status === "stopped" && (
-                <p className="text-xs text-gray-500">Stopped. This reply wasn't saved.</p>
+                <p className="text-xs text-gray-500">{"Stopped. This reply wasn't saved."}</p>
             )}
             {message.status === "error" && (
-                <p className="text-xs text-red-600">This reply failed and wasn't saved.</p> 
+                <p className="text-xs text-red-600">{"This reply failed and wasn't saved."}</p> 
             )}
 
             {citedSources.length > 0 && (

@@ -1,9 +1,17 @@
 import anthropic
 from collections.abc import Iterator
 from app.config import settings
+from pydantic import BaseModel
 
 client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
+def generate_structured[T: BaseModel](system: str, messages: list[dict], output_model: type[T], max_tokens: int=4096) -> T:
+    response = client.messages.parse(model=settings.chat_model, max_tokens=max_tokens, system=system, messages=messages, output_format=output_model)
+    if response.stop_reason == "max_tokens":
+        raise ValueError("The response was cut off before it finished")
+    if response.parsed_output is None:
+        raise ValueError("The model did not return structured output")
+    return response.parsed_output
 def generate(system: str, messages: list[dict], max_tokens: int = 1024) -> str:
     response = client.messages.create(
         model = settings.chat_model,
