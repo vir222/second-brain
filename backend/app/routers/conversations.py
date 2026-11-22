@@ -10,6 +10,7 @@ from app.llm import generate_stream
 from app.models import Conversation, Message, User, Notebook
 from app.rag import (NO_MATCH_ANSWER, SYSTEM_PROMPT, build_context, build_history, find_citations, rewrite_query)
 from app.schemas import (ConversationOut, ConversationCreate, ConversationDetail, MessageOut, MessageCreate)
+from app.rate_limit import rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def delete_conversation(notebook_id: int, conversation_id: int, current_user : U
     db.commit()
 
 @router.post("/{conversation_id}/messages/stream")
-def send_message_stream(notebook_id: int, conversation_id : int, data: MessageCreate, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+def send_message_stream(notebook_id: int, conversation_id : int, data: MessageCreate, current_user : User = Depends(rate_limit("chat", limit=30, window_seconds=3600)), db : Session = Depends(get_db)):
     conversation = get_owned_conversation(notebook_id, conversation_id, current_user, db)
     history = build_history(conversation.messages)
     logger.info("History messages: %d", len(history))

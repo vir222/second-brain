@@ -13,5 +13,36 @@ services:
     image: redis:7
     ports: 
       - "6379:6379"
+  
+  api:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://secondbrain:devpassword@db:5432/secondbrain
+      REDIS_URL: redis://redis:6379/0
+      UPLOAD_DIR: /data/uploads
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      - db
+      - redis
+  
+  worker:
+    build: ./backend
+    command: celery -A app.worker worker --loglevel=info --concurrency=2
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://secondbrain:devpassword@db:5432/secondbrain
+      REDIS_URL: redis://redis:6379/0
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      - db
+      - redis
 volumes:
   pgdata:
+  uploads:
+  

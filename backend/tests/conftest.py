@@ -6,6 +6,7 @@ os.environ["JWT_SECRET"] = "test-secret"
 os.environ["OPENAI_API_KEY"] = "test-openai-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
 os.environ["UPLOAD_DIR"] = "test_uploads"
+os.environ["RATE_LIMIT_ENABLED"] = "false"
 
 import pytest # noqa: E402
 from fastapi.testclient import TestClient # noqa: E402

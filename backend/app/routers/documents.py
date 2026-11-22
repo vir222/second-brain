@@ -10,6 +10,7 @@ from app.models import Document, User, Chunk
 from app.schemas import DocumentOut, ChunkOut
 from app.processing import process_document
 from app.tasks import process_document_task
+from app.rate_limit import rate_limit
 
 router = APIRouter(prefix="/notebooks/{notebook_id}/documents", tags = ["documents"])
 
@@ -44,7 +45,7 @@ def validate_contents(extension: str, data : bytes) -> None:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "txt files must be utf-8")
 
 @router.post("", response_model=DocumentOut, status_code=status.HTTP_201_CREATED)
-def upload_document(notebook_id : int, file : UploadFile, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+def upload_document(notebook_id : int, file : UploadFile, current_user : User = Depends(rate_limit("upload", limit=20, window_seconds=3600)), db : Session = Depends(get_db)):
     notebook = get_owned_notebooks(notebook_id, current_user, db)
     filename = file.filename or "untitled"
     extension = Path(filename).suffix.lower()
@@ -103,7 +104,7 @@ def get_document(notebook_id : int, document_id : int, current_user : User = Dep
     return get_owned_document(notebook_id, document_id, current_user, db)
 
 @router.post("/{document_id}/reprocess", response_model=DocumentOut)
-def reprocess_document(notebook_id : int, document_id : int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db),):
+def reprocess_document(notebook_id : int, document_id : int, current_user : User = Depends(rate_limit("upload", limit=20, window_seconds=3600)), db : Session = Depends(get_db),):
     document = get_owned_document(notebook_id, document_id, current_user, db)
     if document.status in ("pending", "processing"):
         raise HTTPException(status.HTTP_409_CONFLICT, "document is already processing")

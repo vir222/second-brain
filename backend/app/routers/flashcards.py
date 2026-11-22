@@ -10,6 +10,7 @@ from app.models import Document, Flashcard, User
 from app.schemas import FlashcardGenerateRequest, FlashcardOut, FlashcardUpdate, ReviewRequest, FlashcardStats
 from datetime import datetime, timezone
 from app.srs import CardSchedule, schedule_review
+from app.rate_limit import rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def get_owned_flashcard(notebook_id : int, flashcard_id : int, user: User, db: S
     return flashcard
 
 @router.post("/documents/{document_id}/flashcards/generate", response_model=list[FlashcardOut], status_code=status.HTTP_201_CREATED,)
-def generate_document_flashcards(notebook_id: int, document_id: int, data: FlashcardGenerateRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db),):
+def generate_document_flashcards(notebook_id: int, document_id: int, data: FlashcardGenerateRequest, current_user: User = Depends(rate_limit("flashcards", limit=10, window_seconds=3600)), db: Session = Depends(get_db),):
     notebook = get_owned_notebooks(notebook_id, current_user, db)
     document = db.scalar(select(Document).where(Document.id == document_id, Document.notebook_id == notebook.id,))  
     if document is None:

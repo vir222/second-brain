@@ -8,13 +8,14 @@ from app.embeddings import embed_texts
 from app.models import Chunk, Document, User
 from app.schemas import SearchRequest, SearchResult
 from app.retrieval import search_chunks
+from app.rate_limit import rate_limit
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/notebook/{notebook_id}/search", tags = ["search"])
 
 @router.post("", response_model= list[SearchResult])
-def search_notebook(notebook_id : int, data : SearchRequest, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+def search_notebook(notebook_id : int, data : SearchRequest, current_user : User = Depends(rate_limit("search", limit=60, window_seconds=3600)), db : Session = Depends(get_db)):
     notebook = get_owned_notebooks(notebook_id, current_user, db)
 
     try:

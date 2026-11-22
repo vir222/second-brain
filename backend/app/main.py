@@ -8,7 +8,9 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="Second Brain API")
+is_production = settings.environment == "production"
+
+app = FastAPI(title="Second Brain API", docs_url=None if is_production else "/docs", redoc_url=None, openapi_url=None if is_production else "/openapi.json",)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
