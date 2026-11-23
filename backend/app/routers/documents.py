@@ -12,6 +12,7 @@ from app.processing import process_document
 from app.tasks import process_document_task
 from app.rate_limit import rate_limit
 
+
 router = APIRouter(prefix="/notebooks/{notebook_id}/documents", tags = ["documents"])
 
 ALLOWED_TYPES = {
